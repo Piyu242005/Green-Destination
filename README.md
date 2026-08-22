@@ -1,7 +1,7 @@
 <!-- HEADER -->
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=200&section=header&text=Employee%20Attrition%20Prediction%20System&fontSize=40&fontAlignY=35&fontColor=ffffff&desc=Green%20Destinations%20HR%20Analytics%20%7C%20AI-Powered%20Retention%20Insights&descAlignY=55&descAlign=50" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=200&section=header&text=Employee%20Attrition%20Prediction%20System&fontSize=40&fontAlignY=35&fontColor=ffffff&desc=Green%20Destinations%20HR%20Analytics%20%7C%20Explainable%20AI&descAlignY=55&descAlign=50" width="100%"/>
 
 </div>
 
@@ -9,212 +9,170 @@
 
 [![Streamlit App](https://img.shields.io/badge/Streamlit-App-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://green-destinations-employee-attrition-analysis.streamlit.app/)
 
-> **Production-Ready ML System** for predicting employee turnover with high recall and model explainability (SHAP).
+> End-to-end HR analytics and machine-learning system for employee attrition risk prediction, threshold optimization, API serving, and SHAP explainability.
 
 ![Green Destinations Logo](greendestination+logo.png)
 
----
+## 🎯 Problem Statement
 
-## 🛑 Problem Statement
+Employee attrition creates recruitment, training, and productivity costs. This project predicts attrition risk and explains the factors behind an individual prediction so HR teams can prioritize retention actions.
 
-Employee attrition is a critical challenge for modern businesses. High turnover rates not only incur significant recruitment and training costs but also disrupt team productivity. This project delivers a **Strategic HR Intelligence System** that doesn't just predict "who" might leave, but explains **"why"** using Explainable AI (SHAP), allowing for targeted interventions.
-
-![Project Objective](Project%20Objective.jpg)
-
----
-
-## 🏗️ System Architecture
-
-This project has been evolved from a simple notebook into a modular, production-grade architecture:
+## 🏗️ Architecture
 
 ```mermaid
 graph LR
-    User((User)) --> UI[Streamlit Frontend]
-    UI --> API[FastAPI Backend]
-    API --> Model[Random Forest Pipeline]
-    Model --> Prediction[Attrition Risk Score]
+    User((HR User)) --> UI[Streamlit Frontend]
+    UI --> Model[Production ML Pipeline]
+    API[FastAPI API] --> Model
+    Model --> Risk[Attrition Probability]
     Model --> XAI[SHAP Explainability]
-    Prediction --> UI
-    XAI --> UI
 ```
 
-- **Backend (FastAPI):** A high-performance REST API for model serving.
-- **Frontend (Streamlit):** An interactive dashboard for HR managers to perform "What-If" analysis.
-- **ML Pipeline:** Robust preprocessing with `ColumnTransformer` and `ImbPipeline` to prevent data leakage.
-- **Explainable AI (XAI):** Integrated SHAP plots to provide prediction transparency.
+### Engineering highlights
 
----
+- **Leakage-safe ML pipeline:** preprocessing, one-hot encoding, SMOTE, and Random Forest are kept inside a single `ImbPipeline`.
+- **Hyperparameter tuning:** `GridSearchCV` with stratified cross-validation.
+- **Threshold optimization:** threshold is selected on a validation set using **F2**, giving recall greater weight than precision.
+- **Unbiased evaluation:** the final test set remains untouched until final evaluation.
+- **Production refit:** the selected model is retrained on train + validation data before being saved.
+- **Explainable AI:** SHAP identifies features contributing to an individual prediction.
+- **Validated API:** Pydantic request validation rejects malformed or incomplete employee records.
+- **Health endpoint:** `/health` reports whether the model is loaded.
+- **Metadata:** training writes the selected threshold and final evaluation metrics to `models/model_metadata.json`.
 
-## 📊 Model Performance
+## 📊 Model Evaluation
 
-We implemented a **Random Forest Classifier** optimized via a threshold search to prioritize **Recall**.
+The project reports:
 
-| Metric | Score | Note |
-| :--- | :---: | :--- |
-| **ROC-AUC** | **0.801** | Strong discriminative power |
-| **Recall (Leaving Class)** | **0.66** | Optimized to catch 66% of leavers |
-| **Precision** | **0.40** | Focused on coverage over exactness |
-| **F1-Score** | **0.50** | Balanced for imbalanced classes |
+| Metric | Purpose |
+| :--- | :--- |
+| ROC-AUC | Overall ranking/discrimination |
+| PR-AUC | Performance under class imbalance |
+| Recall | How many potential leavers are detected |
+| Precision | How many flagged employees are actual leavers |
+| F1 | Balance between precision and recall |
+| F2 | Recall-focused threshold selection |
+| Confusion Matrix | False-positive / false-negative analysis |
 
-✅ **Optimization:** We tuned the classification threshold to **0.3** (down from 0.5) to minimize **False Negatives**, ensuring fewer at-risk employees are missed by HR.
+**Important:** run `python src/train.py` after cloning to generate the current model metadata and refresh the evaluation numbers. The threshold is no longer selected using the final test set.
 
----
+## 🚀 API
 
-## 🚀 API Usage (Production Serving)
+### `POST /predict`
 
-The model is served via a **FastAPI** microservice.
+The endpoint accepts a validated employee profile and returns:
 
-**Endpoint:** `POST /predict`
-
-**Example Request:**
-```json
-{
-  "Age": 30,
-  "MonthlyIncome": 5000,
-  "OverTime": "Yes",
-  "TotalWorkingYears": 5,
-  "YearsAtCompany": 2,
-  "Department": "Sales",
-  "JobRole": "Sales Executive"
-}
-```
-
-**Example Response:**
 ```json
 {
   "attrition_probability": 0.72,
   "risk_level": "High",
-  "recommendation": "Urgent Stay Interview recommended"
+  "tuned_threshold": 0.30,
+  "action": "Immediate retention interview suggested"
 }
 ```
 
----
+### `GET /health`
 
-## 📊 Dataset & Features
+Returns model availability and service health.
 
-The analysis is based on a comprehensive HR dataset containing **1,470 employee records**.
+Interactive API documentation is available from FastAPI at `/docs` when the service is running.
 
-- **File:** `data/greendestination (1) (1).csv`
-- **Key Engineered Features:**
-  - `IncomePerAge`: Monthly income normalized by age.
-  - `TenureRatio`: Ratio of tenure at company vs. total career length.
-  - `OverTime`: Binary indicator of workload pressure.
+## 📊 Dataset
 
----
+The project uses `data/hr_data.csv` containing 1,470 employee records.
 
-## 📉 Visualizations & Explainability
+Engineered features include:
 
-### 🔍 Model Explainability (SHAP)
-We use **SHAP (SHapley Additive exPlanations)** to break down individual risk scores. This enables HR to understand the exact factors contributing to a "High Risk" prediction for a specific employee.
+- `IncomePerAge`
+- `TenureRatio`
 
-### 🖥️ System Interface Gallery
+## 🖥️ Streamlit Dashboard
 
-| FastAPI Backend Service | Upgraded Streamlit Dashboard |
-| :---: | :---: |
-| ![FastAPI Backend](Screenshot%20Gallery/FastAPI%20backend.png) | ![Streamlit Dashboard](Screenshot%20Gallery/Streamlit%20dashboard.png) |
+The dashboard provides:
 
----
+- Employee profile inputs
+- Attrition probability
+- Validation-selected decision threshold
+- High/Low risk classification
+- SHAP feature explanation
 
 ## 💻 Tech Stack
 
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-v0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
-![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-ML-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Containerization-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-
----
+- Python 3.10+
+- pandas / NumPy
+- scikit-learn
+- imbalanced-learn
+- Random Forest
+- SHAP
+- FastAPI / Uvicorn
+- Streamlit
+- Docker
+- Pytest
 
 ## 📂 Project Structure
 
 ```text
 Green-Destinations-Employee-Attrition-Analysis/
-│
-├── .github/workflows/  # CI/CD pipelines (Pytest)
-├── data/               # Raw HR dataset (CSV)
-├── models/             # Serialized .pkl files (Pipeline & SHAP background)
-├── src/                # Core ML Logic
-│   ├── config.py       # Centralized configuration
-│   ├── features.py     # Shared feature engineering logic
-│   └── train.py        # GridSearchCV training script
-├── app/                # Deployment Layer
-│   ├── api.py          # FastAPI REST Backend
-│   └── main.py         # Streamlit XAI Frontend
-├── tests/              # Unit Tests
+├── data/
+│   └── hr_data.csv
+├── models/
+│   ├── model_pipeline.pkl
+│   ├── shap_background.pkl
+│   └── model_metadata.json        # generated after training
+├── src/
+│   ├── config.py
+│   ├── features.py
+│   ├── schemas.py
+│   └── train.py
+├── app/
+│   ├── api.py                     # legacy API retained for compatibility
+│   ├── api_secure.py              # validated production API
+│   └── main.py                    # Streamlit UI
+├── tests/
 │   ├── test_api.py
 │   └── test_features.py
-├── requirements.txt     # Consolidated backend, frontend, and ML dependencies
-├── requirements-dev.txt # Testing dependencies
-└── Dockerfile          # Containerization for deployment
+├── requirements.txt
+├── requirements-dev.txt
+└── Dockerfile
 ```
 
----
+## ⚙️ Run Locally
 
-<details>
-  <summary> 🚀 How to Run (Development)</summary>
-
-### 1. Install Dependencies
 ```bash
-# Install all required application dependencies
 pip install -r requirements.txt
-
-# For Testing
 pip install -r requirements-dev.txt
-```
 
-### 2. Train the Model
-```bash
+# Train, tune threshold, evaluate, and save the production model
 python src/train.py
-```
 
-### 3. Start Backend (FastAPI)
-```bash
-python -m uvicorn app.api:app --reload
-```
+# FastAPI
+uvicorn app.api_secure:app --reload --port 8000
 
-### 4. Start Frontend (Streamlit)
-```bash
+# Streamlit
 streamlit run app/main.py
+
+# Tests
+pytest -q
 ```
 
-</details>
-
----
-
-<details>
-  <summary> 🐳 How to Run (Docker)</summary>
+## 🐳 Docker
 
 ```bash
 docker build -t attrition-system .
 docker run -p 8000:8000 -p 8501:8501 attrition-system
 ```
 
-</details>
-
----
-
 ## 🔮 Future Improvements
 
-- **CI/CD Integration:** Automated model retraining via GitHub Actions.
-- **Model Monitoring:** Implement tracking for data drift over time.
-- **Prescriptive Analytics:** Suggesting specific retention actions (e.g., "Proposed 5% salary hike reduces risk by 15%").
+- Data/model drift monitoring
+- Model registry and experiment tracking
+- Cost-sensitive retention optimization
+- Automated retraining pipeline
+- Fairness analysis across employee groups
+- Authentication and rate limiting for the API
 
----
+## 👨‍💻 Author
 
-## Let's Connect & Collaborate
+**Piyush Ramteke** — Data Scientist | AI/ML Engineer
 
-<div align="center">
-
-[![Email](https://img.shields.io/badge/📧_Email-piyu.143247@gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:piyu.143247@gmail.com)
-[![LinkedIn](https://img.shields.io/badge/💼_LinkedIn-Piyush_Ramteke-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/piyush-ramteke-24-mylife)
-
-</div>
-
----
-<div align="center">
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:24243e,50:302b63,100:0f0c29&height=140&section=footer&text=Built%20by%20Piyush&fontSize=22&fontColor=e0d7ff&fontAlignY=70&fontAlign=50" width="100%"/>
-
-[![GitHub](https://img.shields.io/badge/Follow%20%40Piyu242005-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Piyu242005)
-
-</div>
+[GitHub](https://github.com/Piyu242005) · [LinkedIn](https://www.linkedin.com/in/piyush-ramteke-24-mylife)
