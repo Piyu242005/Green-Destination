@@ -31,16 +31,14 @@ def build_advanced_pipeline(X):
     """Build preprocessing, SMOTE and Random Forest in one leakage-safe pipeline."""
     num_cols = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
     cat_cols = X.select_dtypes(include=["object"]).columns.tolist()
-
     preprocessor = ColumnTransformer([
         ("num", StandardScaler(), num_cols),
         ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols),
     ])
-
     return ImbPipeline([
         ("preprocessor", preprocessor),
         ("smote", SMOTE(random_state=config.RANDOM_STATE)),
-        ("classifier", RandomForestClassifier(random_state=config.RANDOM_STATE, class_weight=None)),
+        ("classifier", RandomForestClassifier(random_state=config.RANDOM_STATE)),
     ])
 
 
@@ -48,19 +46,13 @@ def select_threshold(y_true, probabilities):
     """Select a threshold on validation data using F2, favoring recall."""
     best_threshold = config.DEFAULT_MODEL_THRESHOLD
     best_score = -1.0
-
-    thresholds = np.arange(
-        config.THRESHOLD_MIN,
-        config.THRESHOLD_MAX + config.THRESHOLD_STEP / 2,
-        config.THRESHOLD_STEP,
-    )
+    thresholds = np.arange(config.THRESHOLD_MIN, config.THRESHOLD_MAX + config.THRESHOLD_STEP / 2, config.THRESHOLD_STEP)
     for threshold in thresholds:
         predictions = (probabilities >= threshold).astype(int)
         score = fbeta_score(y_true, predictions, beta=2, zero_division=0)
         if score > best_score:
             best_score = score
             best_threshold = float(round(threshold, 2))
-
     return best_threshold, best_score
 
 
@@ -80,45 +72,40 @@ def evaluate(y_true, probabilities, threshold):
 
 def train_and_save():
     print("Loading data...")
-    df = pd.read_csv(config.DATA_PATH)
-    df = engineer_features(df)
-
+    df = engineer_features(pd.read_csv(config.DATA_PATH))
     X = df.drop(["Attrition", "EmployeeCount", "Over18", "StandardHours", "EmployeeNumber"], axis=1)
     y = df["Attrition"].map({"Yes": 1, "No": 0})
 
-    # Keep a final untouched test set for unbiased evaluation.
+    # Final test set remains untouched until the final evaluation.
     X_train_val, X_test, y_train_val, y_test = train_test_split(
         X, y, test_size=config.TEST_SIZE, stratify=y, random_state=config.RANDOM_STATE
     )
     validation_fraction = config.VALIDATION_SIZE / (1 - config.TEST_SIZE)
     X_train, X_val, y_train, y_val = train_test_split(
-        X_train_val,
-        y_train_val,
-        test_size=validation_fraction,
-        stratify=y_train_val,
-        random_state=config.RANDOM_STATE,
+        X_train_val, y_train_val, test_size=validation_fraction,
+        stratify=y_train_val, random_state=config.RANDOM_STATE
     )
 
-    print("Training model with SMOTE and Random Forest...")
     pipeline = build_advanced_pipeline(X)
     cv = StratifiedKFold(n_splits=config.CV_SPLITS, shuffle=True, random_state=config.RANDOM_STATE)
     grid_search = GridSearchCV(
-        pipeline,
-        param_grid=config.RF_PARAM_GRID,
-        cv=cv,
-        scoring="recall",
-        n_jobs=-1,
-        verbose=1,
+        pipeline, param_grid=config.RF_PARAM_GRID, cv=cv,
+        scoring="recall", n_jobs=-1, verbose=1
     )
     grid_search.fit(X_train, y_train)
-    best_model = grid_search.best_estimator_
 
-    # Threshold selection happens only on validation data.
-    val_probabilities = best_model.predict_proba(X_val)[:, 1]
+    # Tune threshold only on validation data.
+    tuned_model = grid_search.best_estimator_
+    val_probabilities = tuned_model.predict_proba(X_val)[:, 1]
     threshold, validation_f2 = select_threshold(y_val, val_probabilities)
 
-    # Final metrics are calculated once on the untouched test set.
-    test_probabilities = best_model.predict_proba(X_test)[:, 1]
+    # Retrain the selected pipeline on train + validation data before production use.
+    production_model = build_advanced_pipeline(X)
+    production_model.set_params(**grid_search.best_params_)
+    production_model.fit(X_train_val, y_train_val)
+
+    # Test set is used once for unbiased final reporting.
+    test_probabilities = production_model.predict_proba(X_test)[:, 1]
     test_metrics = evaluate(y_test, test_probabilities, threshold)
     print("\n--- Final Test Performance ---")
     print(classification_report(y_test, (test_probabilities >= threshold).astype(int), zero_division=0))
@@ -127,17 +114,19 @@ def train_and_save():
     print(f"Selected threshold: {threshold:.2f}")
 
     os.makedirs(os.path.dirname(config.MODEL_PIPELINE_PATH), exist_ok=True)
-    joblib.dump(best_model, config.MODEL_PIPELINE_PATH)
-    X_train.head(100).to_pickle(config.SHAP_BACKGROUND_PATH)
+    joblib.dump(production_model, config.MODEL_PIPELINE_PATH)
+    X_train_val.head(100).to_pickle(config.SHAP_BACKGROUND_PATH)
 
     metadata = {
         "model": "RandomForestClassifier",
         "best_params": grid_search.best_params_,
         "threshold": threshold,
+        "threshold_selection": "validation_f2",
         "validation_f2": round(float(validation_f2), 4),
         "test_metrics": test_metrics,
         "train_rows": len(X_train),
         "validation_rows": len(X_val),
+        "production_fit_rows": len(X_train_val),
         "test_rows": len(X_test),
         "random_state": config.RANDOM_STATE,
     }
