@@ -1,17 +1,18 @@
 import pandas as pd
 
+
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Applies shared feature engineering logic for both training and serving.
-    """
-    df = df.copy()
-    
-    # Calculate Income Per Age
-    if 'MonthlyIncome' in df.columns and 'Age' in df.columns:
-        df['IncomePerAge'] = df['MonthlyIncome'] / df['Age']
-        
-    # Calculate Tenure Ratio
-    if 'YearsAtCompany' in df.columns and 'TotalWorkingYears' in df.columns:
-        df['TenureRatio'] = df['YearsAtCompany'] / (df['TotalWorkingYears'] + 1)
-        
-    return df
+    """Apply deterministic feature engineering shared by training and inference."""
+    result = df.copy()
+
+    if "MonthlyIncome" in result.columns and "Age" in result.columns:
+        age = pd.to_numeric(result["Age"], errors="coerce").clip(lower=1)
+        income = pd.to_numeric(result["MonthlyIncome"], errors="coerce")
+        result["IncomePerAge"] = income / age
+
+    if "YearsAtCompany" in result.columns and "TotalWorkingYears" in result.columns:
+        tenure = pd.to_numeric(result["YearsAtCompany"], errors="coerce").clip(lower=0)
+        total = pd.to_numeric(result["TotalWorkingYears"], errors="coerce").clip(lower=0)
+        result["TenureRatio"] = tenure / (total + 1)
+
+    return result
