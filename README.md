@@ -6,33 +6,25 @@ An end-to-end HR analytics and machine-learning system that predicts **employee 
 
 > **Purpose:** I created this project to demonstrate how machine learning can move from attrition prediction to an explainable HR decision-support workflow.
 
-## 🖥️ Project Screenshots
+## 🖥️ Screenshot Gallery
 
-> Screenshots are loaded directly from the repository's `assets/` folder. Add the four PNG files listed below to display them on GitHub.
+> Add the four PNG screenshots to the `screenshots/` folder using the filenames shown below. GitHub will render them directly from the repository.
 
 ### 🔮 Attrition Risk Prediction
 
-<p align="center">
-  <img src="./assets/dashboard.png" alt="Green Destinations attrition risk dashboard" width="900" />
-</p>
+<p align="center"><img src="./screenshots/dashboard.png" alt="Green Destinations attrition risk dashboard" width="900"></p>
 
 ### 🧠 Explainable AI — SHAP Analysis
 
-<p align="center">
-  <img src="./assets/risk-analysis.png" alt="SHAP attrition risk analysis" width="900" />
-</p>
+<p align="center"><img src="./screenshots/risk-analysis.png" alt="SHAP attrition risk analysis" width="900"></p>
 
 ### 📊 HR Analytics Dashboard
 
-<p align="center">
-  <img src="./assets/hr-analytics.png" alt="Green Destinations HR analytics dashboard" width="900" />
-</p>
+<p align="center"><img src="./screenshots/hr-analytics.png" alt="Green Destinations HR analytics dashboard" width="900"></p>
 
 ### 🔌 FastAPI Swagger Documentation
 
-<p align="center">
-  <img src="./assets/api-docs.png" alt="FastAPI Swagger API documentation" width="900" />
-</p>
+<p align="center"><img src="./screenshots/api-docs.png" alt="FastAPI Swagger API documentation" width="900"></p>
 
 ## 🎯 Problem
 
@@ -130,7 +122,7 @@ data/        # HR dataset
 models/      # trained artifacts + metadata
 src/         # feature engineering, training, comparison, monitoring
 app/         # FastAPI + Streamlit applications
-assets/      # README project screenshots
+screenshots/ # README screenshot gallery
 tests/       # automated tests
 docs/        # production checklist
 MODEL_CARD.md
