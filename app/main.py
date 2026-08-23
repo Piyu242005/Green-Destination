@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime
 
 import joblib
 import matplotlib.pyplot as plt
@@ -11,104 +12,151 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src import config
 from src.features import engineer_features
 
-st.set_page_config(page_title="Green Destinations AI", page_icon="🌱", layout="wide")
+st.set_page_config(page_title="Green Destinations AI", page_icon="🌱", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
 <style>
-.main { background-color: #f8f9fa; }
-.stMetric { background-color: white; padding: 20px; border-radius: 10px; }
+.block-container {padding-top: 2rem; max-width: 1400px;}
+.hero {padding: 1.2rem 1.5rem; border-radius: 16px; background: linear-gradient(135deg,#0f172a,#164e63); color:white; margin-bottom:1rem;}
+.hero h1 {margin:0; font-size:2.2rem;}
+.hero p {margin:.35rem 0 0; opacity:.85;}
+.kpi {padding:1rem; border:1px solid #e5e7eb; border-radius:14px; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.04);}
+.risk-high {padding:1.3rem; border-radius:16px; background:#fff1f2; border:1px solid #fecdd3;}
+.risk-low {padding:1.3rem; border-radius:16px; background:#ecfdf5; border:1px solid #a7f3d0;}
+.small {color:#64748b;font-size:.9rem;}
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🌱 Green Destinations: Strategic Attrition Intelligence")
-st.markdown("#### Developed by: Piyush Ramteke")
-st.markdown("---")
-
+st.markdown("""
+<div class="hero">
+<h1>🌱 Green Destinations</h1>
+<p>Employee Attrition Intelligence • Explainable ML • HR Decision Support</p>
+</div>
+""", unsafe_allow_html=True)
 
 @st.cache_resource
 def load_assets():
     if not os.path.exists(config.MODEL_PIPELINE_PATH):
         return None, None
     model = joblib.load(config.MODEL_PIPELINE_PATH)
-    background = None
-    if os.path.exists(config.SHAP_BACKGROUND_PATH):
-        background = pd.read_pickle(config.SHAP_BACKGROUND_PATH)
+    background = pd.read_pickle(config.SHAP_BACKGROUND_PATH) if os.path.exists(config.SHAP_BACKGROUND_PATH) else None
     return model, background
 
+@st.cache_data
+def load_hr_data():
+    path = config.DATA_PATH
+    return pd.read_csv(path) if os.path.exists(path) else pd.DataFrame()
 
 model, background = load_assets()
+df = load_hr_data()
 threshold = config.load_threshold()
 
 if model is None:
-    st.error("❌ Model not found. Run `python src/train.py` first.")
+    st.error("Model not found. Run `python src/train.py` first.")
     st.stop()
 
+# KPI strip
+if not df.empty:
+    k1, k2, k3, k4 = st.columns(4)
+    k1.markdown(f'<div class="kpi"><b>Employees</b><h2>{len(df):,}</h2></div>', unsafe_allow_html=True)
+    attrition = (df["Attrition"] == "Yes").mean() * 100
+    k2.markdown(f'<div class="kpi"><b>Attrition Rate</b><h2>{attrition:.1f}%</h2></div>', unsafe_allow_html=True)
+    overtime_rate = (df["OverTime"] == "Yes").mean() * 100
+    k3.markdown(f'<div class="kpi"><b>Overtime</b><h2>{overtime_rate:.1f}%</h2></div>', unsafe_allow_html=True)
+    k4.markdown(f'<div class="kpi"><b>Avg Monthly Income</b><h2>${df["MonthlyIncome"].mean():,.0f}</h2></div>', unsafe_allow_html=True)
+
+st.markdown("### 👤 Employee Risk Assessment")
 with st.sidebar:
-    st.header("👤 Employee Profile")
+    st.header("Employee Profile")
     age = st.slider("Age", 18, 60, 30)
     dept = st.selectbox("Department", ["Sales", "Research & Development", "Human Resources"])
-    income = st.number_input("Monthly Income ($)", 1000, 20000, 5000)
+    income = st.number_input("Monthly Income ($)", 1000, 20000, 5000, step=500)
     overtime = st.selectbox("Overtime", ["Yes", "No"])
     total_years = st.slider("Total Working Years", 0, 40, 10)
     years_at_co = st.slider("Years at Company", 0, 40, 5)
     role = st.selectbox("Job Role", ["Sales Executive", "Research Scientist", "Laboratory Technician", "Manufacturing Director", "Healthcare Representative", "Manager", "Sales Representative", "Research Director", "Human Resources"])
     env_sat = st.slider("Environment Satisfaction", 1, 4, 3)
     job_sat = st.slider("Job Satisfaction", 1, 4, 3)
+    gender = st.selectbox("Gender", ["Male", "Female"])
+    marital = st.selectbox("Marital Status", ["Single", "Married", "Divorced"])
+    travel = st.selectbox("Business Travel", ["Travel_Rarely", "Travel_Frequently", "Non-Travel"])
+    distance = st.number_input("Distance From Home", 0, 100, 5)
+    analyze = st.button("🔍 Analyze Attrition Risk", type="primary", use_container_width=True)
 
-
-if st.button("Analyze Attrition Risk", type="primary"):
+if analyze:
     input_data = {
         "Age": age, "Department": dept, "MonthlyIncome": income, "OverTime": overtime,
         "TotalWorkingYears": total_years, "YearsAtCompany": years_at_co, "JobRole": role,
-        "EnvironmentSatisfaction": env_sat, "JobSatisfaction": job_sat,
-        "MonthlyRate": 14313, "DailyRate": 802, "HourlyRate": 66, "BusinessTravel": "Travel_Rarely",
-        "DistanceFromHome": 5, "Education": 3, "EducationField": "Life Sciences", "Gender": "Male",
-        "JobInvolvement": 3, "JobLevel": 2, "MaritalStatus": "Single", "NumCompaniesWorked": 1,
-        "PercentSalaryHike": 15, "PerformanceRating": 3, "RelationshipSatisfaction": 3,
-        "StockOptionLevel": 0, "TrainingTimesLastYear": 3, "WorkLifeBalance": 3,
-        "YearsInCurrentRole": 2, "YearsSinceLastPromotion": 1, "YearsWithCurrManager": 2,
+        "EnvironmentSatisfaction": env_sat, "JobSatisfaction": job_sat, "MonthlyRate": 14313,
+        "DailyRate": 802, "HourlyRate": 66, "BusinessTravel": travel, "DistanceFromHome": distance,
+        "Education": 3, "EducationField": "Life Sciences", "Gender": gender, "JobInvolvement": 3,
+        "JobLevel": 2, "MaritalStatus": marital, "NumCompaniesWorked": 1, "PercentSalaryHike": 15,
+        "PerformanceRating": 3, "RelationshipSatisfaction": 3, "StockOptionLevel": 0,
+        "TrainingTimesLastYear": 3, "WorkLifeBalance": 3, "YearsInCurrentRole": 2,
+        "YearsSinceLastPromotion": 1, "YearsWithCurrManager": 2,
     }
-
     input_df = engineer_features(pd.DataFrame([input_data]))
     prob = float(model.predict_proba(input_df)[0][1])
+    high = prob >= threshold
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("Model Prediction")
-        st.metric("Attrition Probability", f"{prob * 100:.1f}%")
-        st.caption(f"Decision threshold: {threshold:.2f} (selected on validation data)")
-        if prob >= threshold:
-            st.error("### High Risk")
-            st.write("Targeted retention strategy required.")
+    left, right = st.columns([1, 1.4])
+    with left:
+        st.markdown("### 🎯 Risk Score")
+        box = "risk-high" if high else "risk-low"
+        label = "HIGH RISK" if high else "LOW RISK"
+        st.markdown(f'<div class="{box}"><h1>{prob*100:.1f}%</h1><h3>{"🔴" if high else "🟢"} {label}</h3><p>Decision threshold: {threshold:.2f}</p></div>', unsafe_allow_html=True)
+        st.progress(min(prob, 1.0))
+        st.markdown("### 💡 Recommended Action")
+        if high:
+            st.warning("Conduct a targeted retention discussion. Review workload, overtime, satisfaction, compensation and career progression.")
         else:
-            st.success("### Low Risk")
-            st.write("Employee is likely to stay.")
+            st.success("Continue normal engagement and periodic satisfaction monitoring.")
 
-    with col2:
-        st.subheader("Explainable AI (SHAP)")
+        report = pd.DataFrame([{
+            "timestamp": datetime.now().isoformat(timespec="seconds"), "risk_probability": round(prob, 4),
+            "risk_level": label, "threshold": threshold, "department": dept, "job_role": role,
+            "monthly_income": income, "overtime": overtime
+        }])
+        st.download_button("⬇️ Download Prediction Report", report.to_csv(index=False), "attrition_prediction.csv", "text/csv", use_container_width=True)
+
+    with right:
+        st.markdown("### 🧠 Why This Prediction?")
         try:
-            transformed_data = model.named_steps["preprocessor"].transform(input_df)
-            classifier = model.named_steps["classifier"]
+            transformed = model.named_steps["preprocessor"].transform(input_df)
+            classifier = model.named_steps.get("classifier", model.named_steps.get("model"))
             explainer = shap.TreeExplainer(classifier)
-            shap_values = explainer.shap_values(transformed_data)
-            feature_names = model.named_steps["preprocessor"].get_feature_names_out()
-
-            if isinstance(shap_values, list):
-                values = shap_values[1][0]
-            elif getattr(shap_values, "ndim", 0) == 3:
-                values = shap_values[0, :, 1]
-            else:
-                values = shap_values[0]
-
-            if hasattr(values, "values"):
-                values = values.values
-
-            plt.close("all")
-            shap.bar_plot(values, feature_names=feature_names, max_display=10, show=False)
-            st.pyplot(plt.gcf(), clear_figure=True)
-            st.write("Positive values increase predicted attrition risk; negative values reduce it.")
+            shap_values = explainer.shap_values(transformed)
+            names = model.named_steps["preprocessor"].get_feature_names_out()
+            if isinstance(shap_values, list): values = shap_values[1][0]
+            elif getattr(shap_values, "ndim", 0) == 3: values = shap_values[0, :, 1]
+            else: values = shap_values[0]
+            if hasattr(values, "values"): values = values.values
+            pairs = pd.DataFrame({"feature": names, "impact": values}).sort_values("impact", key=abs, ascending=False).head(10)
+            st.bar_chart(pairs.set_index("feature")["impact"])
+            st.caption("Positive SHAP values increase predicted attrition risk; negative values reduce it.")
         except Exception as exc:
             st.warning(f"SHAP explanation could not be rendered: {exc}")
 
-st.markdown("---")
-st.info("💡 End-to-end ML system: preprocessing, SMOTE, Random Forest, validation-based thresholding, FastAPI serving, Streamlit UI, and SHAP explainability.")
+# Analytics section
+st.divider()
+st.markdown("### 📊 HR Analytics")
+if not df.empty:
+    f1, f2 = st.columns(2)
+    with f1:
+        selected_dept = st.selectbox("Department filter", ["All"] + sorted(df["Department"].unique().tolist()))
+    with f2:
+        selected_role = st.selectbox("Job role filter", ["All"] + sorted(df["JobRole"].unique().tolist()))
+    view = df.copy()
+    if selected_dept != "All": view = view[view["Department"] == selected_dept]
+    if selected_role != "All": view = view[view["JobRole"] == selected_role]
+    a, b = st.columns(2)
+    with a:
+        st.markdown("**Attrition by Department**")
+        chart = pd.crosstab(view["Department"], view["Attrition"], normalize="index").get("Yes", pd.Series(dtype=float)) * 100
+        st.bar_chart(chart)
+    with b:
+        st.markdown("**Attrition by Job Role**")
+        chart = pd.crosstab(view["JobRole"], view["Attrition"], normalize="index").get("Yes", pd.Series(dtype=float)) * 100
+        st.bar_chart(chart)
+
+st.caption("Decision-support only: predictions should not independently determine hiring, termination, promotion or compensation decisions.")
