@@ -3,7 +3,6 @@ import sys
 from datetime import datetime
 
 import joblib
-import matplotlib.pyplot as plt
 import pandas as pd
 import shap
 import streamlit as st
@@ -14,16 +13,39 @@ from src.features import engineer_features
 
 st.set_page_config(page_title="Green Destinations AI", page_icon="🌱", layout="wide", initial_sidebar_state="expanded")
 
+# Theme-safe styling: cards inherit Streamlit's active light/dark theme instead of forcing white backgrounds.
 st.markdown("""
 <style>
-.block-container {padding-top: 2rem; max-width: 1400px;}
-.hero {padding: 1.2rem 1.5rem; border-radius: 16px; background: linear-gradient(135deg,#0f172a,#164e63); color:white; margin-bottom:1rem;}
-.hero h1 {margin:0; font-size:2.2rem;}
-.hero p {margin:.35rem 0 0; opacity:.85;}
-.kpi {padding:1rem; border:1px solid #e5e7eb; border-radius:14px; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.04);}
-.risk-high {padding:1.3rem; border-radius:16px; background:#fff1f2; border:1px solid #fecdd3;}
-.risk-low {padding:1.3rem; border-radius:16px; background:#ecfdf5; border:1px solid #a7f3d0;}
-.small {color:#64748b;font-size:.9rem;}
+.block-container { padding-top: 2rem; max-width: 1400px; }
+.hero {
+    padding: 1.2rem 1.5rem; border-radius: 16px;
+    background: linear-gradient(135deg,#0f172a,#164e63);
+    color: #ffffff; margin-bottom: 1rem;
+}
+.hero h1 { margin: 0; font-size: 2.2rem; color: #ffffff; }
+.hero p { margin: .35rem 0 0; color: rgba(255,255,255,.85); }
+
+/* No hard-coded white card: works in both Streamlit light and dark themes. */
+.kpi {
+    padding: 1rem; border: 1px solid rgba(128,128,128,.25);
+    border-radius: 14px; background: transparent;
+    color: inherit; box-shadow: none;
+}
+.kpi h2, .kpi b { color: inherit; }
+
+.risk-high {
+    padding: 1.3rem; border-radius: 16px;
+    background: rgba(239,68,68,.10); border: 1px solid rgba(239,68,68,.35);
+}
+.risk-low {
+    padding: 1.3rem; border-radius: 16px;
+    background: rgba(16,185,129,.10); border: 1px solid rgba(16,185,129,.35);
+}
+.risk-high h1, .risk-high h3, .risk-high p,
+.risk-low h1, .risk-low h3, .risk-low p { color: inherit; }
+
+[data-testid="stSidebar"] { border-right: 1px solid rgba(128,128,128,.20); }
+[data-testid="stMetric"] { background: transparent; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -55,7 +77,6 @@ if model is None:
     st.error("Model not found. Run `python src/train.py` first.")
     st.stop()
 
-# KPI strip
 if not df.empty:
     k1, k2, k3, k4 = st.columns(4)
     k1.markdown(f'<div class="kpi"><b>Employees</b><h2>{len(df):,}</h2></div>', unsafe_allow_html=True)
@@ -137,7 +158,6 @@ if analyze:
         except Exception as exc:
             st.warning(f"SHAP explanation could not be rendered: {exc}")
 
-# Analytics section
 st.divider()
 st.markdown("### 📊 HR Analytics")
 if not df.empty:
