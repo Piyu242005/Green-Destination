@@ -2,9 +2,29 @@
 
 ### Explainable Employee Attrition Risk Prediction System
 
-An end-to-end HR analytics and ML system that predicts **employee attrition risk**, explains individual predictions with SHAP, and converts risk into practical retention actions.
+An end-to-end HR analytics and machine-learning system that predicts **employee attrition risk**, explains individual predictions with SHAP, and converts risk into practical retention actions.
 
-> **Purpose:** I created this project to demonstrate how machine learning can move from a simple attrition prediction to an explainable HR decision-support workflow.
+> **Purpose:** I created this project to demonstrate how machine learning can move from attrition prediction to an explainable HR decision-support workflow.
+
+## 🖥️ Project Screenshots
+
+### 🔮 Attrition Risk Prediction
+
+![Attrition Risk Dashboard](assets/dashboard.png)
+
+### 🧠 Explainable AI — SHAP Analysis
+
+![SHAP Risk Analysis](assets/risk-analysis.png)
+
+### 📊 HR Analytics Dashboard
+
+![HR Analytics Dashboard](assets/hr-analytics.png)
+
+### 🔌 FastAPI Swagger Documentation
+
+![FastAPI Documentation](assets/api-docs.png)
+
+> **Note:** The screenshot files are stored in `assets/` so the README remains self-contained and does not depend on external image hosting.
 
 ## 🎯 Problem
 
@@ -29,11 +49,15 @@ graph LR
 - GridSearchCV with stratified cross-validation
 - Validation-based **F2 threshold optimization**
 - Untouched final test set for unbiased evaluation
-- Production refit using train + validation data
 - SHAP individual explanations
+- Model comparison benchmarking
+- Data/prediction drift monitoring utilities
+- Fairness and representation analysis
 - Pydantic API validation
 - `/health` model-health endpoint
-- Model metadata saved after training
+- Model metadata generated after training
+- HR analytics dashboard
+- Responsible-AI model card
 
 ## 📊 Evaluation
 
@@ -55,24 +79,25 @@ GET  /health
 GET  /docs
 ```
 
-Example response:
+## 🖥️ Applications
 
-```json
-{
-  "attrition_probability": 0.72,
-  "risk_level": "High",
-  "tuned_threshold": 0.30,
-  "action": "Immediate retention interview suggested"
-}
-```
-
-## 🖥️ Dashboard
+Prediction dashboard:
 
 ```bash
 streamlit run app/main.py
 ```
 
-The dashboard accepts employee information and displays risk, probability and SHAP-based explanations.
+HR analytics dashboard:
+
+```bash
+streamlit run app/analytics_dashboard.py
+```
+
+Validated production-oriented API:
+
+```bash
+uvicorn app/advanced_api:app --reload --port 8000
+```
 
 ## 🚀 Setup
 
@@ -80,8 +105,6 @@ The dashboard accepts employee information and displays risk, probability and SH
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 python src/train.py
-uvicorn app.api_secure:app --reload --port 8000
-streamlit run app/main.py
 pytest -q
 ```
 
@@ -97,25 +120,21 @@ docker run -p 8000:8000 -p 8501:8501 attrition-system
 ```text
 data/        # HR dataset
 models/      # trained artifacts + metadata
-src/         # features, schemas and training
-app/         # API + Streamlit application
+src/         # feature engineering, training, comparison, monitoring
+app/         # FastAPI + Streamlit applications
+assets/      # README project screenshots
 tests/       # automated tests
+docs/        # production checklist
+MODEL_CARD.md
 Dockerfile
 requirements.txt
 ```
 
-## 🔐 Production Considerations
+## 🔐 Responsible AI
 
-The current system is portfolio/production-oriented but still requires environment-specific hardening before real HR deployment. Recommended next steps are authentication, rate limiting, model registry, drift monitoring, fairness analysis and automated retraining.
+This is an **HR decision-support system**, not an automated employment decision-maker. Predictions should be reviewed by qualified HR professionals and should not independently determine hiring, termination, promotion or compensation decisions.
 
-## 🗺️ Roadmap
-
-- [ ] Data/model drift monitoring
-- [ ] Model registry and experiment tracking
-- [ ] Fairness analysis
-- [ ] Authentication and rate limiting
-- [ ] Automated retraining
-- [ ] Cost-sensitive retention optimization
+See [`MODEL_CARD.md`](MODEL_CARD.md) for intended use, limitations, evaluation and responsible-AI guidance.
 
 ## 👨‍💻 Author
 
