@@ -18,12 +18,15 @@ st.markdown("""
 .hero h1{margin:0}.hero p{opacity:.8;margin:.4rem 0 0}
 .card{padding:1rem 1.1rem;border:1px solid rgba(128,128,128,.22);border-radius:16px;background:var(--background-color)}
 .insight{padding:1rem;border:1px solid rgba(128,128,128,.18);border-radius:14px;background:rgba(128,128,128,.05);min-height:115px}
+.footer{text-align:center;opacity:.65;margin-top:2rem;padding-top:1rem;border-top:1px solid rgba(128,128,128,.18)}
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown("""
-<div class="hero"><h1>🌱 Green Destinations</h1>
-<p>HR Intelligence Center · Executive Overview · Risk Analytics · Explainable Decisions</p></div>
+<div class="hero">
+<h1>🌱 Green Destinations</h1>
+<p>HR Intelligence Center · Executive Overview · Risk Analytics · Explainable Decisions</p>
+</div>
 """, unsafe_allow_html=True)
 
 @st.cache_resource
@@ -42,7 +45,6 @@ if model is None or df.empty:
 
 threshold = float(config.load_threshold())
 
-# ---------- Executive overview ----------
 st.markdown("## 🏢 Executive Overview")
 attrition_rate = (df.Attrition == "Yes").mean() * 100
 high_risk = int((df.Attrition == "Yes").sum())
@@ -55,20 +57,16 @@ c2.metric("Observed Attrition", f"{attrition_rate:.1f}%")
 c3.metric("Overtime Exposure", f"{overtime_rate:.1f}%")
 c4.metric("Average Tenure", f"{avg_tenure:.1f} yrs")
 
-risk_tab, analytics_tab, employee_tab, whatif_tab, model_tab = st.tabs([
-    "🔴 Risk Distribution", "📊 Workforce Analytics", "👤 Employee 360°", "🎛️ What-If Simulator", "⚙️ Model Health"
-])
+risk_tab, analytics_tab, employee_tab, whatif_tab, model_tab = st.tabs(["🔴 Risk Distribution", "📊 Workforce Analytics", "👤 Employee 360°", "🎛️ What-If Simulator", "⚙️ Model Health"])
 
 with risk_tab:
     st.markdown("### Workforce Risk Distribution")
-    # Dataset attrition is used as observed outcome; the trained model is used for live employee assessment below.
     observed = pd.DataFrame({"Status":["Retained","Attrition"],"Employees":[len(df)-high_risk,high_risk]}).set_index("Status")
     a,b = st.columns([1,1.5])
     with a:
         st.metric("Observed Attrition Cases", f"{high_risk:,}")
         st.metric("Observed Retention Cases", f"{len(df)-high_risk:,}")
-    with b:
-        st.bar_chart(observed, height=300)
+    with b: st.bar_chart(observed, height=300)
     st.info("Observed attrition is not the same as predicted future risk. Use Employee 360° or What-If for model-based prediction.")
 
 with analytics_tab:
@@ -99,13 +97,15 @@ with analytics_tab:
     i1,i2,i3=st.columns(3)
     top_dept=dchart.idxmax() if not dchart.empty else "N/A"
     top_role=rchart.idxmax() if not rchart.empty else "N/A"
+    overtime_yes=view[view.OverTime=="Yes"]
+    overtime_signal=(overtime_yes.Attrition=="Yes").mean()*100 if len(overtime_yes) else 0
     i1.markdown(f'<div class="insight"><b>Highest attrition department</b><h3>{top_dept}</h3><small>Observed rate in selected view.</small></div>',unsafe_allow_html=True)
     i2.markdown(f'<div class="insight"><b>Highest attrition role</b><h3>{top_role}</h3><small>Observed rate in selected view.</small></div>',unsafe_allow_html=True)
-    i3.markdown(f'<div class="insight"><b>Overtime attrition</b><h3>{(view[view.OverTime=="Yes"].Attrition=="Yes").mean()*100:.1f}%</h3><small>Observed among overtime employees.</small></div>',unsafe_allow_html=True)
+    i3.markdown(f'<div class="insight"><b>Overtime signal</b><h3>{overtime_signal:.1f}%</h3><small>Observed attrition among overtime employees.</small></div>',unsafe_allow_html=True)
     st.download_button("⬇️ Export filtered HR data",view.to_csv(index=False),"hr_analytics.csv","text/csv")
 
-# Common model input helper
 ROLES=["Sales Executive","Research Scientist","Laboratory Technician","Manufacturing Director","Healthcare Representative","Manager","Sales Representative","Research Director","Human Resources"]
+
 def predict(age, department, income, overtime, years, years_company, role, env_sat, job_sat):
     row={"Age":age,"Department":department,"MonthlyIncome":income,"OverTime":overtime,"TotalWorkingYears":years,"YearsAtCompany":years_company,"JobRole":role,"EnvironmentSatisfaction":env_sat,"JobSatisfaction":job_sat,"MonthlyRate":14313,"DailyRate":802,"HourlyRate":66,"BusinessTravel":"Travel_Rarely","DistanceFromHome":5,"Education":3,"EducationField":"Life Sciences","Gender":"Male","JobInvolvement":3,"JobLevel":2,"MaritalStatus":"Single","NumCompaniesWorked":1,"PercentSalaryHike":15,"PerformanceRating":3,"RelationshipSatisfaction":3,"StockOptionLevel":0,"TrainingTimesLastYear":3,"WorkLifeBalance":3,"YearsInCurrentRole":2,"YearsSinceLastPromotion":1,"YearsWithCurrManager":2}
     x=engineer_features(pd.DataFrame([row]))
@@ -128,8 +128,7 @@ with employee_tab:
         if p>=threshold:
             st.warning("Priority retention review recommended.")
             st.markdown("**Suggested actions:** review workload and overtime, conduct a 1:1 conversation, assess satisfaction, and review career progression.")
-        else:
-            st.success("Lower predicted risk. Continue normal engagement and periodic monitoring.")
+        else: st.success("Lower predicted risk. Continue normal engagement and periodic monitoring.")
         st.dataframe(pd.DataFrame({"Profile":["Age","Department","Role","Income","Overtime","Tenure"],"Value":[e_age,e_dept,e_role,f"${e_income:,.0f}",e_overtime,f"{e_tenure} yrs"]}),hide_index=True,use_container_width=True)
 
 with whatif_tab:
@@ -137,8 +136,10 @@ with whatif_tab:
     st.caption("Change controllable factors and compare the model's predicted probability. This is a scenario tool, not a causal guarantee.")
     w1,w2=st.columns(2)
     with w1:
+        st.markdown("**Current Profile**")
         wa_overtime=st.selectbox("Current overtime",["Yes","No"]); wa_job=st.slider("Current job satisfaction",1,4,2); wa_income=st.number_input("Current income (USD)",1000,20000,5000,500)
     with w2:
+        st.markdown("**Scenario Profile**")
         wb_overtime=st.selectbox("Scenario overtime",["No","Yes"]); wb_job=st.slider("Scenario job satisfaction",1,4,4); wb_income=st.number_input("Scenario income (USD)",1000,20000,6500,500)
     if st.button("Compare Scenario",type="primary"):
         current=predict(30,"Sales",wa_income,wa_overtime,10,5,"Sales Executive",3,wa_job)
@@ -156,4 +157,4 @@ with model_tab:
     st.success("Model artifact loaded successfully. For production monitoring, connect this panel to logged prediction and drift metrics.")
     st.markdown("**Responsible AI:** predictions are decision-support only and should not independently determine hiring, termination, promotion or compensation decisions.")
 
-st.caption("Green Destinations HR Intelligence · Explainable ML · Decision-support only")
+st.markdown('<div class="footer">Built by <strong>Piyush Ramteke</strong> · Green Destinations HR Intelligence · Explainable ML</div>', unsafe_allow_html=True)
