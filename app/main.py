@@ -23,6 +23,7 @@ st.markdown("""
 .kpi h2 {margin:.25rem 0 0;}
 .risk-high {padding:1.3rem; border-radius:16px; background:rgba(239,68,68,.10); border:1px solid rgba(239,68,68,.35);}
 .risk-low {padding:1.3rem; border-radius:16px; background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.35);}
+.currency-card {padding:1rem 1.1rem; border:1px solid rgba(128,128,128,.25); border-radius:14px; background:var(--background-color);}
 </style>
 """, unsafe_allow_html=True)
 
@@ -54,13 +55,22 @@ if model is None:
     st.error("Model not found. Run `python src/train.py` first.")
     st.stop()
 
-# Currency selector: show all income values in both USD and INR.
+# Separate currency inputs and outputs. The model always receives USD-equivalent MonthlyIncome.
 USD_TO_INR = 85.0
 
-def currency_pair(value_usd: float) -> str:
-    value_inr = value_usd * USD_TO_INR
-    return f"${value_usd:,.0f}  |  ₹{value_inr:,.0f}"
+def usd_to_inr(value: float) -> float:
+    return value * USD_TO_INR
 
+def inr_to_usd(value: float) -> float:
+    return value / USD_TO_INR
+
+def money_usd(value: float) -> str:
+    return f"${value:,.0f}"
+
+def money_inr(value: float) -> str:
+    return f"₹{value:,.0f}"
+
+# Separate dashboard currency cards
 if not df.empty:
     k1, k2, k3, k4 = st.columns(4)
     k1.markdown(f'<div class="kpi"><b>Employees</b><h2>{len(df):,}</h2></div>', unsafe_allow_html=True)
@@ -68,16 +78,32 @@ if not df.empty:
     k2.markdown(f'<div class="kpi"><b>Attrition Rate</b><h2>{attrition:.1f}%</h2></div>', unsafe_allow_html=True)
     overtime_rate = (df["OverTime"] == "Yes").mean() * 100
     k3.markdown(f'<div class="kpi"><b>Overtime</b><h2>{overtime_rate:.1f}%</h2></div>', unsafe_allow_html=True)
-    avg_income = float(df["MonthlyIncome"].mean())
-    k4.markdown(f'<div class="kpi"><b>Avg Monthly Income</b><h2>{currency_pair(avg_income)}</h2><small>USD | INR</small></div>', unsafe_allow_html=True)
+    avg_income_usd = float(df["MonthlyIncome"].mean())
+    avg_income_inr = usd_to_inr(avg_income_usd)
+    k4.markdown(f'<div class="kpi"><b>Avg Income — USD</b><h2>{money_usd(avg_income_usd)}</h2></div>', unsafe_allow_html=True)
+
+    c_usd, c_inr = st.columns(2)
+    with c_usd:
+        st.markdown(f'<div class="currency-card"><b>💵 Average Monthly Income — USD</b><h2>{money_usd(avg_income_usd)}</h2></div>', unsafe_allow_html=True)
+    with c_inr:
+        st.markdown(f'<div class="currency-card"><b>🇮🇳 Average Monthly Income — INR</b><h2>{money_inr(avg_income_inr)}</h2></div>', unsafe_allow_html=True)
 
 st.markdown("### 👤 Employee Risk Assessment")
 with st.sidebar:
     st.header("Employee Profile")
     age = st.slider("Age", 18, 60, 30)
     dept = st.selectbox("Department", ["Sales", "Research & Development", "Human Resources"])
-    income_usd = st.number_input("Monthly Income (USD)", 1000, 20000, 5000, step=500)
-    st.caption(f"Monthly Income: **{currency_pair(income_usd)}**")
+
+    currency = st.radio("Income Currency", ["USD ($)", "INR (₹)"], horizontal=True)
+    if currency == "USD ($)":
+        income_input = st.number_input("Monthly Income (USD)", 1000, 20000, 5000, step=500)
+        income_usd = float(income_input)
+        st.caption(f"Equivalent INR: **{money_inr(usd_to_inr(income_usd))}**")
+    else:
+        income_input = st.number_input("Monthly Income (INR)", 85000, 1700000, 425000, step=5000)
+        income_usd = inr_to_usd(float(income_input))
+        st.caption(f"Equivalent USD: **{money_usd(income_usd)}**")
+
     overtime = st.selectbox("Overtime", ["Yes", "No"])
     total_years = st.slider("Total Working Years", 0, 40, 10)
     years_at_co = st.slider("Years at Company", 0, 40, 5)
@@ -122,7 +148,7 @@ if analyze:
         report = pd.DataFrame([{
             "timestamp": datetime.now().isoformat(timespec="seconds"), "risk_probability": round(prob, 4),
             "risk_level": label, "threshold": threshold, "department": dept, "job_role": role,
-            "monthly_income_usd": income_usd, "monthly_income_inr": round(income_usd * USD_TO_INR, 2), "overtime": overtime
+            "monthly_income_usd": round(income_usd, 2), "monthly_income_inr": round(usd_to_inr(income_usd), 2), "overtime": overtime
         }])
         st.download_button("⬇️ Download Prediction Report", report.to_csv(index=False), "attrition_prediction.csv", "text/csv", use_container_width=True)
 
