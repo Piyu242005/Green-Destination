@@ -8,23 +8,31 @@ An end-to-end HR analytics and machine-learning system that predicts **employee 
 
 ## 🖥️ Project Screenshots
 
+> Screenshots are loaded directly from the repository's `assets/` folder. Add the four PNG files listed below to display them on GitHub.
+
 ### 🔮 Attrition Risk Prediction
 
-![Attrition Risk Dashboard](assets/dashboard.png)
+<p align="center">
+  <img src="./assets/dashboard.png" alt="Green Destinations attrition risk dashboard" width="900" />
+</p>
 
 ### 🧠 Explainable AI — SHAP Analysis
 
-![SHAP Risk Analysis](assets/risk-analysis.png)
+<p align="center">
+  <img src="./assets/risk-analysis.png" alt="SHAP attrition risk analysis" width="900" />
+</p>
 
 ### 📊 HR Analytics Dashboard
 
-![HR Analytics Dashboard](assets/hr-analytics.png)
+<p align="center">
+  <img src="./assets/hr-analytics.png" alt="Green Destinations HR analytics dashboard" width="900" />
+</p>
 
 ### 🔌 FastAPI Swagger Documentation
 
-![FastAPI Documentation](assets/api-docs.png)
-
-> **Note:** The screenshot files are stored in `assets/` so the README remains self-contained and does not depend on external image hosting.
+<p align="center">
+  <img src="./assets/api-docs.png" alt="FastAPI Swagger API documentation" width="900" />
+</p>
 
 ## 🎯 Problem
 
