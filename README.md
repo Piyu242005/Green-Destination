@@ -1,66 +1,61 @@
-<!-- HEADER -->
-<div align="center">
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=200&section=header&text=Employee%20Attrition%20Prediction%20System&fontSize=40&fontAlignY=35&fontColor=ffffff&desc=Green%20Destinations%20HR%20Analytics%20%7C%20Explainable%20AI&descAlignY=55&descAlign=50" width="100%"/>
-
-</div>
-
 # 🌍 Green Destinations Employee Attrition Analysis
 
-[![Streamlit App](https://img.shields.io/badge/Streamlit-App-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://green-destinations-employee-attrition-analysis.streamlit.app/)
+### Explainable Employee Attrition Risk Prediction System
 
-> End-to-end HR analytics and machine-learning system for employee attrition risk prediction, threshold optimization, API serving, and SHAP explainability.
+An end-to-end HR analytics and ML system that predicts **employee attrition risk**, explains individual predictions with SHAP, and converts risk into practical retention actions.
 
-![Green Destinations Logo](greendestination+logo.png)
+> **Purpose:** I created this project to demonstrate how machine learning can move from a simple attrition prediction to an explainable HR decision-support workflow.
 
-## 🎯 Problem Statement
+## 🎯 Problem
 
-Employee attrition creates recruitment, training, and productivity costs. This project predicts attrition risk and explains the factors behind an individual prediction so HR teams can prioritize retention actions.
+Employee turnover creates recruitment, training and productivity costs. The system helps HR teams identify higher-risk employees and understand the factors contributing to that risk.
 
 ## 🏗️ Architecture
 
 ```mermaid
 graph LR
-    User((HR User)) --> UI[Streamlit Frontend]
-    UI --> Model[Production ML Pipeline]
-    API[FastAPI API] --> Model
-    Model --> Risk[Attrition Probability]
-    Model --> XAI[SHAP Explainability]
+    HR[HR User] --> UI[Streamlit]
+    UI --> API[FastAPI]
+    API --> PIPE[Leakage-safe ML Pipeline]
+    PIPE --> RISK[Attrition Probability]
+    PIPE --> XAI[SHAP Explanation]
+    RISK --> ACTION[Retention Action]
 ```
 
-### Engineering highlights
+## ✨ Engineering Highlights
 
-- **Leakage-safe ML pipeline:** preprocessing, one-hot encoding, SMOTE, and Random Forest are kept inside a single `ImbPipeline`.
-- **Hyperparameter tuning:** `GridSearchCV` with stratified cross-validation.
-- **Threshold optimization:** threshold is selected on a validation set using **F2**, giving recall greater weight than precision.
-- **Unbiased evaluation:** the final test set remains untouched until final evaluation.
-- **Production refit:** the selected model is retrained on train + validation data before being saved.
-- **Explainable AI:** SHAP identifies features contributing to an individual prediction.
-- **Validated API:** Pydantic request validation rejects malformed or incomplete employee records.
-- **Health endpoint:** `/health` reports whether the model is loaded.
-- **Metadata:** training writes the selected threshold and final evaluation metrics to `models/model_metadata.json`.
+- Leakage-safe preprocessing with `ImbPipeline`
+- One-hot encoding and SMOTE inside the training pipeline
+- GridSearchCV with stratified cross-validation
+- Validation-based **F2 threshold optimization**
+- Untouched final test set for unbiased evaluation
+- Production refit using train + validation data
+- SHAP individual explanations
+- Pydantic API validation
+- `/health` model-health endpoint
+- Model metadata saved after training
 
-## 📊 Model Evaluation
+## 📊 Evaluation
 
-The project reports:
+Reported metrics include:
 
-| Metric | Purpose |
-| :--- | :--- |
-| ROC-AUC | Overall ranking/discrimination |
-| PR-AUC | Performance under class imbalance |
-| Recall | How many potential leavers are detected |
-| Precision | How many flagged employees are actual leavers |
-| F1 | Balance between precision and recall |
-| F2 | Recall-focused threshold selection |
-| Confusion Matrix | False-positive / false-negative analysis |
+**ROC-AUC · PR-AUC · Recall · Precision · F1 · F2 · Confusion Matrix**
 
-**Important:** run `python src/train.py` after cloning to generate the current model metadata and refresh the evaluation numbers. The threshold is no longer selected using the final test set.
+Run training to generate current metrics:
 
-## 🚀 API
+```bash
+python src/train.py
+```
 
-### `POST /predict`
+## 🔌 API
 
-The endpoint accepts a validated employee profile and returns:
+```text
+POST /predict
+GET  /health
+GET  /docs
+```
+
+Example response:
 
 ```json
 {
@@ -71,87 +66,22 @@ The endpoint accepts a validated employee profile and returns:
 }
 ```
 
-### `GET /health`
+## 🖥️ Dashboard
 
-Returns model availability and service health.
-
-Interactive API documentation is available from FastAPI at `/docs` when the service is running.
-
-## 📊 Dataset
-
-The project uses `data/hr_data.csv` containing 1,470 employee records.
-
-Engineered features include:
-
-- `IncomePerAge`
-- `TenureRatio`
-
-## 🖥️ Streamlit Dashboard
-
-The dashboard provides:
-
-- Employee profile inputs
-- Attrition probability
-- Validation-selected decision threshold
-- High/Low risk classification
-- SHAP feature explanation
-
-## 💻 Tech Stack
-
-- Python 3.10+
-- pandas / NumPy
-- scikit-learn
-- imbalanced-learn
-- Random Forest
-- SHAP
-- FastAPI / Uvicorn
-- Streamlit
-- Docker
-- Pytest
-
-## 📂 Project Structure
-
-```text
-Green-Destinations-Employee-Attrition-Analysis/
-├── data/
-│   └── hr_data.csv
-├── models/
-│   ├── model_pipeline.pkl
-│   ├── shap_background.pkl
-│   └── model_metadata.json        # generated after training
-├── src/
-│   ├── config.py
-│   ├── features.py
-│   ├── schemas.py
-│   └── train.py
-├── app/
-│   ├── api.py                     # legacy API retained for compatibility
-│   ├── api_secure.py              # validated production API
-│   └── main.py                    # Streamlit UI
-├── tests/
-│   ├── test_api.py
-│   └── test_features.py
-├── requirements.txt
-├── requirements-dev.txt
-└── Dockerfile
+```bash
+streamlit run app/main.py
 ```
 
-## ⚙️ Run Locally
+The dashboard accepts employee information and displays risk, probability and SHAP-based explanations.
+
+## 🚀 Setup
 
 ```bash
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
-
-# Train, tune threshold, evaluate, and save the production model
 python src/train.py
-
-# FastAPI
 uvicorn app.api_secure:app --reload --port 8000
-
-# Streamlit
 streamlit run app/main.py
-
-# Tests
 pytest -q
 ```
 
@@ -162,17 +92,31 @@ docker build -t attrition-system .
 docker run -p 8000:8000 -p 8501:8501 attrition-system
 ```
 
-## 🔮 Future Improvements
+## 📁 Structure
 
-- Data/model drift monitoring
-- Model registry and experiment tracking
-- Cost-sensitive retention optimization
-- Automated retraining pipeline
-- Fairness analysis across employee groups
-- Authentication and rate limiting for the API
+```text
+data/        # HR dataset
+models/      # trained artifacts + metadata
+src/         # features, schemas and training
+app/         # API + Streamlit application
+tests/       # automated tests
+Dockerfile
+requirements.txt
+```
+
+## 🔐 Production Considerations
+
+The current system is portfolio/production-oriented but still requires environment-specific hardening before real HR deployment. Recommended next steps are authentication, rate limiting, model registry, drift monitoring, fairness analysis and automated retraining.
+
+## 🗺️ Roadmap
+
+- [ ] Data/model drift monitoring
+- [ ] Model registry and experiment tracking
+- [ ] Fairness analysis
+- [ ] Authentication and rate limiting
+- [ ] Automated retraining
+- [ ] Cost-sensitive retention optimization
 
 ## 👨‍💻 Author
 
 **Piyush Ramteke** — Data Scientist | AI/ML Engineer
-
-[GitHub](https://github.com/Piyu242005) · [LinkedIn](https://www.linkedin.com/in/piyush-ramteke-24-mylife)
