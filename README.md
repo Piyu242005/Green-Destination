@@ -6,14 +6,6 @@ An end-to-end HR analytics and machine-learning system for employee attrition an
 
 > **Purpose:** This project demonstrates the complete journey from HR data exploration and factor analysis to machine-learning deployment.
 
-## 🖼️ Screenshot Gallery
-
-### Streamlit Dashboard
-
-<p align="center">
-  <img src="./screenshots/Streamlit%20dashboard.png" alt="Streamlit Dashboard" width="900">
-</p>
-
 ## 🎯 Problem
 
 Employee turnover creates recruitment, training and productivity costs. The project analyzes attrition patterns and provides an ML-based decision-support workflow for identifying higher-risk employees.
@@ -92,7 +84,6 @@ data/        # HR dataset
 models/      # trained artifacts + metadata
 src/         # feature engineering, training, comparison, monitoring
 app/         # FastAPI + Streamlit applications
-screenshots/ # Project screenshot gallery
 tests/       # automated tests
 docs/        # production checklist
 MODEL_CARD.md
