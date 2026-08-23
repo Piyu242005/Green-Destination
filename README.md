@@ -2,70 +2,93 @@
 
 ### Explainable Employee Attrition Risk Prediction System
 
-An end-to-end HR analytics and machine-learning system that predicts **employee attrition risk**, explains individual predictions with SHAP, and converts risk into practical retention actions.
+An end-to-end HR analytics and machine-learning system for employee attrition analysis, visual exploration, explainable risk prediction, and API-based serving.
 
-> **Purpose:** I created this project to demonstrate how machine learning can move from attrition prediction to an explainable HR decision-support workflow.
+> **Purpose:** This project demonstrates the complete journey from HR data exploration and factor analysis to machine-learning deployment.
 
-## 🖥️ Screenshot Gallery
+## 🖼️ Screenshot Gallery
 
-> Add the four PNG screenshots to the `screenshots/` folder using the filenames shown below. GitHub will render them directly from the repository.
+### 1. Load and Explore the Data
 
-### 🔮 Attrition Risk Prediction
+<p align="center"><img src="./screenshots/1.%20Load%20and%20Explore%20the%20Data.png" alt="Load and Explore the Data" width="900"></p>
 
-<p align="center"><img src="./screenshots/dashboard.png" alt="Green Destinations attrition risk dashboard" width="900"></p>
+### 2. Calculate Attrition Rate
 
-### 🧠 Explainable AI — SHAP Analysis
+<p align="center"><img src="./screenshots/2.%20Calculate%20Attrition%20Rate.png" alt="Calculate Attrition Rate" width="900"></p>
 
-<p align="center"><img src="./screenshots/risk-analysis.png" alt="SHAP attrition risk analysis" width="900"></p>
+### 3. Factor Analysis — Age vs Attrition
 
-### 📊 HR Analytics Dashboard
+<p align="center"><img src="./screenshots/3.%20Factor%20Analysis%20Age%20vs%20Attrition.png" alt="Age vs Attrition analysis" width="900"></p>
 
-<p align="center"><img src="./screenshots/hr-analytics.png" alt="Green Destinations HR analytics dashboard" width="900"></p>
+### 4. Factor Analysis — Years at Company vs Attrition
 
-### 🔌 FastAPI Swagger Documentation
+<p align="center"><img src="./screenshots/4.%20Factor%20Analysis%20Years%20at%20Company%20vs%20Attrition.png" alt="Years at Company vs Attrition analysis" width="900"></p>
 
-<p align="center"><img src="./screenshots/api-docs.png" alt="FastAPI Swagger API documentation" width="900"></p>
+### 5. Factor Analysis — Monthly Income vs Attrition
+
+<p align="center"><img src="./screenshots/5.%20Factor%20Analysis%20Monthly%20Income%20vs%20Attrition.png" alt="Monthly Income vs Attrition analysis" width="900"></p>
+
+### 6. Summary & Key Findings
+
+<p align="center"><img src="./screenshots/6.%20Summary%20%26%20Key%20Findings.png" alt="Summary and Key Findings" width="900"></p>
+
+### 7. Summary & Key Findings — Alternate View
+
+<p align="center"><img src="./screenshots/6.%20Summary%20%26%20Key%20Findings%20%282%29.png" alt="Summary and Key Findings alternate view" width="900"></p>
+
+### 🚀 FastAPI Backend
+
+<p align="center"><img src="./screenshots/FastAPI%20backend.png" alt="FastAPI backend" width="900"></p>
+
+### 🖥️ Streamlit Dashboard
+
+<p align="center"><img src="./screenshots/Streamlit%20dashboard.png" alt="Streamlit dashboard" width="900"></p>
+
+### 📌 Project Preview
+
+<p align="center"><img src="./screenshots/github.jpeg" alt="Project preview" width="900"></p>
 
 ## 🎯 Problem
 
-Employee turnover creates recruitment, training and productivity costs. The system helps HR teams identify higher-risk employees and understand the factors contributing to that risk.
+Employee turnover creates recruitment, training and productivity costs. The project analyzes attrition patterns and provides an ML-based decision-support workflow for identifying higher-risk employees.
 
 ## 🏗️ Architecture
 
 ```mermaid
 graph LR
-    HR[HR User] --> UI[Streamlit]
-    UI --> API[FastAPI]
-    API --> PIPE[Leakage-safe ML Pipeline]
-    PIPE --> RISK[Attrition Probability]
-    PIPE --> XAI[SHAP Explanation]
-    RISK --> ACTION[Retention Action]
+    DATA[HR Dataset] --> EDA[EDA & Factor Analysis]
+    EDA --> FE[Feature Engineering]
+    FE --> ML[Leakage-safe ML Pipeline]
+    ML --> EVAL[Model Evaluation]
+    EVAL --> API[FastAPI]
+    EVAL --> UI[Streamlit]
+    ML --> XAI[SHAP Explainability]
+    API --> ACTION[Retention Decision Support]
 ```
 
 ## ✨ Engineering Highlights
 
+- HR data exploration and attrition-rate analysis
+- Factor analysis across age, tenure and income
 - Leakage-safe preprocessing with `ImbPipeline`
-- One-hot encoding and SMOTE inside the training pipeline
+- One-hot encoding and SMOTE
 - GridSearchCV with stratified cross-validation
 - Validation-based **F2 threshold optimization**
-- Untouched final test set for unbiased evaluation
+- Untouched final test set for evaluation
 - SHAP individual explanations
 - Model comparison benchmarking
 - Data/prediction drift monitoring utilities
 - Fairness and representation analysis
 - Pydantic API validation
 - `/health` model-health endpoint
-- Model metadata generated after training
 - HR analytics dashboard
 - Responsible-AI model card
 
 ## 📊 Evaluation
 
-Reported metrics include:
-
 **ROC-AUC · PR-AUC · Recall · Precision · F1 · F2 · Confusion Matrix**
 
-Run training to generate current metrics:
+Generate current model metrics with:
 
 ```bash
 python src/train.py
@@ -81,21 +104,9 @@ GET  /docs
 
 ## 🖥️ Applications
 
-Prediction dashboard:
-
 ```bash
 streamlit run app/main.py
-```
-
-HR analytics dashboard:
-
-```bash
 streamlit run app/analytics_dashboard.py
-```
-
-Validated production-oriented API:
-
-```bash
 uvicorn app/advanced_api:app --reload --port 8000
 ```
 
@@ -108,13 +119,6 @@ python src/train.py
 pytest -q
 ```
 
-## 🐳 Docker
-
-```bash
-docker build -t attrition-system .
-docker run -p 8000:8000 -p 8501:8501 attrition-system
-```
-
 ## 📁 Structure
 
 ```text
@@ -122,7 +126,7 @@ data/        # HR dataset
 models/      # trained artifacts + metadata
 src/         # feature engineering, training, comparison, monitoring
 app/         # FastAPI + Streamlit applications
-screenshots/ # README screenshot gallery
+screenshots/ # Project screenshot gallery
 tests/       # automated tests
 docs/        # production checklist
 MODEL_CARD.md
@@ -133,8 +137,6 @@ requirements.txt
 ## 🔐 Responsible AI
 
 This is an **HR decision-support system**, not an automated employment decision-maker. Predictions should be reviewed by qualified HR professionals and should not independently determine hiring, termination, promotion or compensation decisions.
-
-See [`MODEL_CARD.md`](MODEL_CARD.md) for intended use, limitations, evaluation and responsible-AI guidance.
 
 ## 👨‍💻 Author
 
