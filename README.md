@@ -8,45 +8,47 @@ An end-to-end HR analytics and machine-learning system for employee attrition an
 
 ## 🖼️ Screenshot Gallery
 
+> Screenshots use clean, GitHub-safe filenames. Keep the image files inside the `screenshots/` folder with these exact names.
+
 ### 1. Load and Explore the Data
 
-<p align="center"><img src="./screenshots/1.%20Load%20and%20Explore%20the%20Data.png" alt="Load and Explore the Data" width="900"></p>
+<p align="center"><img src="./screenshots/01-load-data.png" alt="Load and Explore the Data" width="900"></p>
 
 ### 2. Calculate Attrition Rate
 
-<p align="center"><img src="./screenshots/2.%20Calculate%20Attrition%20Rate.png" alt="Calculate Attrition Rate" width="900"></p>
+<p align="center"><img src="./screenshots/02-attrition-rate.png" alt="Calculate Attrition Rate" width="900"></p>
 
 ### 3. Factor Analysis — Age vs Attrition
 
-<p align="center"><img src="./screenshots/3.%20Factor%20Analysis%20Age%20vs%20Attrition.png" alt="Age vs Attrition analysis" width="900"></p>
+<p align="center"><img src="./screenshots/03-age-vs-attrition.png" alt="Age vs Attrition analysis" width="900"></p>
 
 ### 4. Factor Analysis — Years at Company vs Attrition
 
-<p align="center"><img src="./screenshots/4.%20Factor%20Analysis%20Years%20at%20Company%20vs%20Attrition.png" alt="Years at Company vs Attrition analysis" width="900"></p>
+<p align="center"><img src="./screenshots/04-years-at-company.png" alt="Years at Company vs Attrition analysis" width="900"></p>
 
 ### 5. Factor Analysis — Monthly Income vs Attrition
 
-<p align="center"><img src="./screenshots/5.%20Factor%20Analysis%20Monthly%20Income%20vs%20Attrition.png" alt="Monthly Income vs Attrition analysis" width="900"></p>
+<p align="center"><img src="./screenshots/05-income-vs-attrition.png" alt="Monthly Income vs Attrition analysis" width="900"></p>
 
 ### 6. Summary & Key Findings
 
-<p align="center"><img src="./screenshots/6.%20Summary%20%26%20Key%20Findings.png" alt="Summary and Key Findings" width="900"></p>
+<p align="center"><img src="./screenshots/06-summary-findings.png" alt="Summary and Key Findings" width="900"></p>
 
 ### 7. Summary & Key Findings — Alternate View
 
-<p align="center"><img src="./screenshots/6.%20Summary%20%26%20Key%20Findings%20%282%29.png" alt="Summary and Key Findings alternate view" width="900"></p>
+<p align="center"><img src="./screenshots/07-summary-findings-alt.png" alt="Summary and Key Findings alternate view" width="900"></p>
 
 ### 🚀 FastAPI Backend
 
-<p align="center"><img src="./screenshots/FastAPI%20backend.png" alt="FastAPI backend" width="900"></p>
+<p align="center"><img src="./screenshots/08-fastapi-backend.png" alt="FastAPI backend" width="900"></p>
 
 ### 🖥️ Streamlit Dashboard
 
-<p align="center"><img src="./screenshots/Streamlit%20dashboard.png" alt="Streamlit dashboard" width="900"></p>
+<p align="center"><img src="./screenshots/09-streamlit-dashboard.png" alt="Streamlit dashboard" width="900"></p>
 
 ### 📌 Project Preview
 
-<p align="center"><img src="./screenshots/github.jpeg" alt="Project preview" width="900"></p>
+<p align="center"><img src="./screenshots/10-project-preview.jpeg" alt="Project preview" width="900"></p>
 
 ## 🎯 Problem
 
