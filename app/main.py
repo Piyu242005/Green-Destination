@@ -55,7 +55,6 @@ if model is None:
     st.error("Model not found. Run `python src/train.py` first.")
     st.stop()
 
-# Separate currency inputs and outputs. The model always receives USD-equivalent MonthlyIncome.
 USD_TO_INR = 85.0
 
 def usd_to_inr(value: float) -> float:
@@ -70,18 +69,17 @@ def money_usd(value: float) -> str:
 def money_inr(value: float) -> str:
     return f"₹{value:,.0f}"
 
-# Separate dashboard currency cards
 if not df.empty:
     k1, k2, k3, k4 = st.columns(4)
     k1.markdown(f'<div class="kpi"><b>Employees</b><h2>{len(df):,}</h2></div>', unsafe_allow_html=True)
     attrition = (df["Attrition"] == "Yes").mean() * 100
     k2.markdown(f'<div class="kpi"><b>Attrition Rate</b><h2>{attrition:.1f}%</h2></div>', unsafe_allow_html=True)
     overtime_rate = (df["OverTime"] == "Yes").mean() * 100
-    k3.markdown(f'<div class="kpi"><b>Overtime</b><h2>{overtime_rate:.1f}%</h2></div>', unsafe_allow_html=True)
+    k3.markdown(f'<div class="kpi"><b>Overtime Rate</b><h2>{overtime_rate:.1f}%</h2></div>', unsafe_allow_html=True)
+    k4.markdown(f'<div class="kpi"><b>Retention Opportunity</b><h2>{attrition:.1f}%</h2></div>', unsafe_allow_html=True)
+
     avg_income_usd = float(df["MonthlyIncome"].mean())
     avg_income_inr = usd_to_inr(avg_income_usd)
-    k4.markdown(f'<div class="kpi"><b>Avg Income — USD</b><h2>{money_usd(avg_income_usd)}</h2></div>', unsafe_allow_html=True)
-
     c_usd, c_inr = st.columns(2)
     with c_usd:
         st.markdown(f'<div class="currency-card"><b>💵 Average Monthly Income — USD</b><h2>{money_usd(avg_income_usd)}</h2></div>', unsafe_allow_html=True)
